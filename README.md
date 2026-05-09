@@ -285,7 +285,7 @@ Available for purchase, if interested please email me at `michaelperes562@gmail.
 #### Current Sponsors
 
 <a href="https://termius.com/" target="_blank">
-  <img src="assets/termius-logo-1084-black.png" alt="Termius" width="300">
+  <img src="termius-logo-1084-black.png" alt="Termius" width="300">
 </a>
 
 Termius provides a secure, reliable, and collaborative SSH client.
