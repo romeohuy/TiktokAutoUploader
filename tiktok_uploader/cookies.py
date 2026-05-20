@@ -4,26 +4,51 @@ from .basics import eprint
 import pickle
 import os
 
+import json
+import os
 
 def load_cookies_from_file(filename: str, cookies_path=None):
     if not cookies_path:
-        cookie_path = os.path.join(os.getcwd(), Config.get().cookies_dir, filename + ".cookie")
+        cookie_path = os.path.join(
+            os.getcwd(),
+            Config.get().cookies_dir,
+            filename + ".cookie"
+        )
     else:
         cookie_path = os.path.join(cookies_path, filename + ".cookie")
+
     if not os.path.exists(cookie_path):
-        # eprint(f"Warning: Could not find cookie file at path: {cookie_path} (ignoring)")
         print("User not found on system.")
         return []
-    
-    cookie_data = pickle.load(open(cookie_path, "rb"))
+
+    with open(cookie_path, "r", encoding="utf-8") as f:
+        cookie_data = json.load(f)
+
     cookies = []
+
     for cookie in cookie_data:
-        # still necessary?
-        if 'sameSite' in cookie:
-            if cookie['sameSite'] == 'None':
-                cookie['sameSite'] = 'Strict'
         cookies.append(cookie)
+
     return cookies
+# def load_cookies_from_file(filename: str, cookies_path=None):
+#     if not cookies_path:
+#         cookie_path = os.path.join(os.getcwd(), Config.get().cookies_dir, filename + ".cookie")
+#     else:
+#         cookie_path = os.path.join(cookies_path, filename + ".cookie")
+#     if not os.path.exists(cookie_path):
+#         # eprint(f"Warning: Could not find cookie file at path: {cookie_path} (ignoring)")
+#         print("User not found on system.")
+#         return []
+    
+#     cookie_data = pickle.load(open(cookie_path, "rb"))
+#     cookies = []
+#     for cookie in cookie_data:
+#         # still necessary?
+#         if 'sameSite' in cookie:
+#             if cookie['sameSite'] == 'None':
+#                 cookie['sameSite'] = 'Strict'
+#         cookies.append(cookie)
+#     return cookies
 
 
 def save_cookies_to_file(cookies, filename: str, cookies_path=None):
