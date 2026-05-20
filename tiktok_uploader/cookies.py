@@ -56,10 +56,16 @@ def save_cookies_to_file(cookies, filename: str, cookies_path=None):
         cookie_path = os.path.join(os.getcwd(), Config.get().cookies_dir, filename + ".cookie")
     else:
         cookie_path = os.path.join(cookies_path, filename + ".cookie")
-    print("Saving cookies to file: ", cookie_path)
-    with open(cookie_path, "wb") as f:
-        pickle.dump(cookies, f)
+    # print("Saving cookies to file: ", cookie_path)
+    # with open(cookie_path, "wb") as f:
+    #     pickle.dump(cookies, f)
+    #     f.close()
+    print("Saving cookies to file:", cookie_path)
+
+    with open(cookie_path, "w", encoding="utf-8") as f:
+        json.dump(cookies, f, ensure_ascii=False, indent=4)
         f.close()
+    
 
 
 def delete_cookies_file(filename: str, cookies_path=None):

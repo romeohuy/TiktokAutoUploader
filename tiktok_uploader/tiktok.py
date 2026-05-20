@@ -3,7 +3,7 @@ import requests, zlib, json, time, subprocess, string, secrets, os, sys
 from fake_useragent import FakeUserAgentError, UserAgent
 from requests_auth_aws_sigv4 import AWSSigV4
 from tiktok_uploader.cookies import load_cookies_from_file
-from tiktok_uploader.Browser import Browser
+#from tiktok_uploader.Browser import Browser
 from tiktok_uploader.bot_utils import *
 from tiktok_uploader import Config, Video, eprint
 from dotenv import load_dotenv
@@ -19,61 +19,75 @@ _UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch
 REQUIRED_SESSION_COOKIE_NAMES = ("sessionid", "tt-target-idc")
 
 
-def wait_for_session_cookies(driver, poll_interval: float = 1.0, timeout: float = None):
-	"""Poll a Selenium driver until both `sessionid` and `tt-target-idc` cookies
-	are present, then return them as a list of cookie dicts.
+# def wait_for_session_cookies(driver, poll_interval: float = 1.0, timeout: float = None):
+# 	"""Poll a Selenium driver until both `sessionid` and `tt-target-idc` cookies
+# 	are present, then return them as a list of cookie dicts.
 
-	Shared by both the CLI login flow (Browser.get().driver) and the noVNC
-	control server, which drives an undetected-chromedriver inside a container.
+# 	Shared by both the CLI login flow (Browser.get().driver) and the noVNC
+# 	control server, which drives an undetected-chromedriver inside a container.
 
-	Args:
-		driver: Selenium WebDriver with an active TikTok page loaded.
-		poll_interval: seconds between cookie checks.
-		timeout: seconds to wait before giving up. None = wait forever.
+# 	Args:
+# 		driver: Selenium WebDriver with an active TikTok page loaded.
+# 		poll_interval: seconds between cookie checks.
+# 		timeout: seconds to wait before giving up. None = wait forever.
 
-	Returns:
-		List of cookie dicts — always contains the sessionid cookie first.
+# 	Returns:
+# 		List of cookie dicts — always contains the sessionid cookie first.
 
-	Raises:
-		TimeoutError: if cookies don't appear within `timeout` seconds.
-	"""
-	start = time.monotonic()
-	collected = {}
-	while True:
-		for cookie in driver.get_cookies():
-			if cookie["name"] in REQUIRED_SESSION_COOKIE_NAMES:
-				collected[cookie["name"]] = cookie
-		if "sessionid" in collected and "tt-target-idc" in collected:
-			# sessionid first for consumer convenience
-			return [collected["sessionid"], collected["tt-target-idc"]]
-		if timeout is not None and (time.monotonic() - start) > timeout:
-			raise TimeoutError(
-				f"Timed out after {timeout}s waiting for TikTok session cookies"
-			)
-		time.sleep(poll_interval)
+# 	Raises:
+# 		TimeoutError: if cookies don't appear within `timeout` seconds.
+# 	"""
+# 	start = time.monotonic()
+# 	collected = {}
+# 	while True:
+# 		for cookie in driver.get_cookies():
+# 			if cookie["name"] in REQUIRED_SESSION_COOKIE_NAMES:
+# 				collected[cookie["name"]] = {
+# 					"name": cookie.get("name"),
+# 					"value": cookie.get("value"),
+# 					"domain": cookie.get("domain"),
+# 					"path": cookie.get("path"),
+# 					"expiry": cookie.get("expiry"),
+# 					"secure": cookie.get("secure"),
+# 					"httpOnly": cookie.get("httpOnly"),
+# 				}
+
+# 		if "sessionid" in collected and "tt-target-idc" in collected:
+# 			# sessionid first for consumer convenience
+# 			return [
+# 				collected["sessionid"],
+# 				collected["tt-target-idc"]
+# 			]
+
+# 		if timeout is not None and (time.monotonic() - start) > timeout:
+# 			raise TimeoutError(
+# 				f"Timed out after {timeout}s waiting for TikTok session cookies"
+# 			)
+
+# 		time.sleep(poll_interval)
 
 
-def login(login_name: str):
-	# Check if login name is already save in file.
-	cookies = load_cookies_from_file(f"tiktok_session-{login_name}")
-	session_cookie = next((c for c in cookies if c["name"] == 'sessionid'), None)
-	session_from_file = session_cookie is not None
+# def login(login_name: str):
+# 	# Check if login name is already save in file.
+# 	cookies = load_cookies_from_file(f"tiktok_session-{login_name}")
+# 	session_cookie = next((c for c in cookies if c["name"] == 'sessionid'), None)
+# 	session_from_file = session_cookie is not None
 
-	if session_from_file:
-		print("Unnecessary login: session already saved!")
-		return session_cookie["value"]
+# 	if session_from_file:
+# 		print("Unnecessary login: session already saved!")
+# 		return session_cookie["value"]
 
-	browser = Browser.get()
-	browser.driver.get(os.getenv("TIKTOK_LOGIN_URL"))
+# 	browser = Browser.get()
+# 	browser.driver.get(os.getenv("TIKTOK_LOGIN_URL"))
 
-	session_cookies = wait_for_session_cookies(browser.driver)
-	session_cookie = next(c for c in session_cookies if c["name"] == "sessionid")
+# 	session_cookies = wait_for_session_cookies(browser.driver)
+# 	session_cookie = next(c for c in session_cookies if c["name"] == "sessionid")
 
-	print("Account successfully saved.")
-	browser.save_cookies(f"tiktok_session-{login_name}", session_cookies)
-	browser.driver.quit()
+# 	print("Account successfully saved.")
+# 	browser.save_cookies(f"tiktok_session-{login_name}", session_cookies)
+# 	browser.driver.quit()
 
-	return session_cookie.get("value", "")
+# 	return session_cookie.get("value", "")
 
 
 # Local Code...
@@ -83,19 +97,19 @@ def upload_video(session_user, video, title, schedule_time=0, allow_comment=1, a
 	except FakeUserAgentError as e:
 		user_agent = _UA
 		print("[-] Could not get random user agent, using default")
-
-	cookies = load_cookies_from_file(f"tiktok_session-{session_user}")
-	session_id = next((c["value"] for c in cookies if c["name"] == 'sessionid'), None)
-	dc_id = next((c["value"] for c in cookies if c["name"] == 'tt-target-idc'), None)
+	session_id = session_user
+	# cookies = load_cookies_from_file(f"tiktok_session-{session_user}")
+	# session_id = next((c["value"] for c in cookies if c["name"] == 'sessionid'), None)
+	# dc_id = next((c["value"] for c in cookies if c["name"] == 'tt-target-idc'), None)
 	
-	if not session_id:
-		eprint("No cookie with Tiktok session id found: use login to save session id")
-		sys.exit(1)
-	if not dc_id:
-		print("[WARNING]: Please login, tiktok datacenter id must be allocated, or may fail")
-		dc_id = "useast2a"
-	print("User successfully logged in.")
-	print(f"Tiktok Datacenter Assigned: {dc_id}")
+	# if not session_id:
+	# 	eprint("No cookie with Tiktok session id found: use login to save session id")
+	# 	sys.exit(1)
+	# if not dc_id:
+	# 	print("[WARNING]: Please login, tiktok datacenter id must be allocated, or may fail")
+	# 	dc_id = "useast2a"
+	# print("User successfully logged in.")
+	# print(f"Tiktok Datacenter Assigned: {dc_id}")
 	
 	print("Uploading video...")
 	# Parameter validation,
@@ -115,7 +129,7 @@ def upload_video(session_user, video, title, schedule_time=0, allow_comment=1, a
 	# Creating Session
 	session = requests.Session()
 	session.cookies.set("sessionid", session_id, domain=".tiktok.com")
-	session.cookies.set("tt-target-idc", dc_id, domain=".tiktok.com")
+	#session.cookies.set("tt-target-idc", dc_id, domain=".tiktok.com")
 	session.verify = True
 
 	headers = {
@@ -376,6 +390,7 @@ def upload_video(session_user, video, title, schedule_time=0, allow_comment=1, a
 	if not uploaded:
 		print("[-] Could not upload video")
 		return False
+	return uploaded
 	# Check if video uploaded successfully (Tiktok has changed endpoint for this)
 	# url = f"https://www.tiktok.com/api/v1/web/project/list/?aid=1988"
 	#
@@ -412,12 +427,13 @@ def upload_to_tiktok(video_file, session):
 	# Accept either an absolute/existing path OR a filename relative to the
 	# configured videos_dir. The API passes absolute paths for uploads that
 	# weren't first dropped into VideosDirPath/.
-	if os.path.isabs(video_file) and os.path.exists(video_file):
-		video_path = video_file
-	else:
-		video_path = os.path.join(os.getcwd(), Config.get().videos_dir, video_file)
-	with open(video_path, "rb") as f:
-		video_content = f.read()
+	# if os.path.isabs(video_file) and os.path.exists(video_file):
+	# 	video_path = video_file
+	# else:
+	# 	video_path = os.path.join(os.getcwd(), Config.get().videos_dir, video_file)
+	# with open(video_path, "rb") as f:
+	# 	video_content = f.read()
+	video_content = video_file.read()
 	file_size = len(video_content)
 	url = f"https://www.tiktok.com/top/v1?Action=ApplyUploadInner&Version=2020-11-19&SpaceName=tiktok&FileType=video&IsInner=1&FileSize={file_size}&s=g158iqx8434"
 
